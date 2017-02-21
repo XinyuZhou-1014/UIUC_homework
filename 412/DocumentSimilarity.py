@@ -1,12 +1,8 @@
 from collections import defaultdict
 from math import log
 import numpy as np
-from matplotlib.mlab import PCA as matPCA
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 import sys
-import pickle
-import json
 
 class DocumentSimilarty():
     def __init__(self, data):
@@ -59,11 +55,9 @@ class DocumentSimilarty():
         return res
 
     def _pca(self, n_components=2):
-        #self.pca_np()
-        #return 
         if self.vecDoc is None:
             self.vecDocGenerator()
-        pca = PCA(n_components=n_components)
+        pca = PCA(n_components=n_components, svd_solver = 'full')
         A = self.vecDoc
         self.pcaVecDoc = pca.fit_transform(np.array(A))
 
@@ -139,6 +133,8 @@ class DocumentSimilarty():
             s = ' '.join(l)
             print(s)
     
+    # standard PCA test
+    '''
     def pca_np(self):
         if self.vecDoc is None:
             self.vecDocGenerator()
@@ -156,12 +152,12 @@ class DocumentSimilarty():
         evals = np.array(evals) / sum(evals)
         for i in evals:
             print(i)
-
+    '''
 
 
 if __name__ == "__main__":
-    path =  'corpus.txt'
-    #path = sys.argv[1]
+    #path =  'corpus.txt'
+    path = sys.argv[1]
     with open(path, 'r') as f:
         data = f.read().split('\n')
     t = DocumentSimilarty(data)
