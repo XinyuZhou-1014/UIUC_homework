@@ -1,3 +1,21 @@
+Update:
+
+problem_[1~5].sh: run code for problem 1~5
+problems:
+1: SGD
+2. DT
+3. DT4
+4. DT8
+5. D stump with SGD
+
+stumpCreator.sh and FeatureCreator.sh run related code to generate features or stumps.
+
+SGD.py: main program of Stochastic Gradient Decreasing algorithm
+WekaTester.java: changed to output any decisiontrees
+FeatureGenerator.java: Generated 536+1 features 
+
+
+
 Here is a brief description of the contents of this directory
 
 - README: This file
