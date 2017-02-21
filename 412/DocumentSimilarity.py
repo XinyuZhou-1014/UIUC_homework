@@ -2,7 +2,6 @@ from collections import defaultdict
 from math import log
 import numpy as np
 from matplotlib.mlab import PCA as matPCA
-from matplotlib import pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import sys
@@ -60,12 +59,12 @@ class DocumentSimilarty():
         return res
 
     def _pca(self, n_components=2):
+        #self.pca_np()
+        #return 
         if self.vecDoc is None:
             self.vecDocGenerator()
         pca = PCA(n_components=n_components)
         A = self.vecDoc
-        # without normalization
-        #A = StandardScaler().fit_transform(A)
         self.pcaVecDoc = pca.fit_transform(np.array(A))
 
     def _ManhanttanDistance(self, v1, v2):
@@ -132,31 +131,18 @@ class DocumentSimilarty():
 
     def show(self):
         res = self.test()
+        print(len(self.wordList))
         for i in range(5):
             l = []
             for j in res[i]:
                 l.append(str(j[1]+1))
             s = ' '.join(l)
             print(s)
-
-    def plot(self):
-        if self.vecDoc is None:
-            self.vecDocGenerator()
-        if self.pcaVecDoc is None:
-            self._pca()
-
-        x = list(map(lambda x: x[0], self.pcaVecDoc))
-        y = list(map(lambda x: x[1], self.pcaVecDoc))
-        plt.scatter(x, y)
-        plt.show()
     
     def pca_np(self):
         if self.vecDoc is None:
             self.vecDocGenerator()
-        print('start calc pca')
-        B = self.vecDoc
-        #x = [x[:100] for x in B[:100]]
-        x = B
+        x = self.vecDoc
         x -= np.mean(x, axis = 0)  
         cov = np.cov(x, rowvar = False)
         evals , evecs = np.linalg.eig(cov)
@@ -164,56 +150,20 @@ class DocumentSimilarty():
         evecs = evecs[:,idx]
         evals = evals[idx]
         a = np.dot(x, evecs) 
-        #resultDict = {'ev': str(ev), 'eig': str(eig), 'a': str(a)}
-        #s = json.dumps(resultDict)
-        #pickleSeries = str(s).encode('utf-8')
-        #with open('pca_a_pickle', 'wb') as f:
-        #    pickle.dump(pickleSeries, f)
-        m = 0
-        for i in range(len(a)):
-            for j in range(len(a[i])):
-                if a[i][j].imag !=0:
-                    print(m, i, j, a[i][j], ...)
-                    m += 1
+        #print(evals)
+        a = np.array(list(map(lambda x: x[:2], a)))
+        self.pcaVecDoc = a.real
+        evals = np.array(evals) / sum(evals)
+        for i in evals:
+            print(i)
 
 
 
 if __name__ == "__main__":
-    path =  'HW1-data/HW1-data/corpus.txt'
+    path =  'corpus.txt'
     #path = sys.argv[1]
     with open(path, 'r') as f:
         data = f.read().split('\n')
     t = DocumentSimilarty(data)
-    #for i in [500, 207, 203, 43, 93, 430, 15, 136, 1, 4, 6, 375, 260, 3, 454]:
-    #    doc = data[i-1]
-    #    print('%s:' %i)
-    #    print(doc)
-    #    print()
-    '''
-    
-    t._pca()
-    print(t.pcaVecDoc[:5])
-    t._pca()
-    print(t.pcaVecDoc[:5])
-    t._pca()
-    print(t.pcaVecDoc[:5])
-    '''
-    #t.pca_np()
-    d = t.test()
+    t.show()
 
-
-
-
-#A = np.matrix(t.vecDoc)
-'''
-A = [[    160,     2,     3,    13],
-     [5,    11,    10,     8],
-     [9,     7,     6,    12],
-     [4,    14,    15,     1]]
-pca = PCA(n_components=2)
-A_std = StandardScaler().fit_transform(A)
-res = pca.fit_transform(np.array(A_std))
-print(res, pca.explained_variance_ratio_)
-res = matPCA(np.array(A))
-print(res.Y, res.fracs)
-'''
