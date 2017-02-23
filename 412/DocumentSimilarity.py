@@ -3,6 +3,7 @@ from math import log
 import numpy as np
 from sklearn.decomposition import PCA
 import sys
+import os
 
 class DocumentSimilarty():
     def __init__(self, data):
@@ -157,7 +158,7 @@ class DocumentSimilarty():
 
 if __name__ == "__main__":
     #path =  'corpus.txt'
-    path = sys.argv[1]
+    path = os.path.abspath(sys.argv[1])
     with open(path, 'r') as f:
         data = f.read().split('\n')
     t = DocumentSimilarty(data)
