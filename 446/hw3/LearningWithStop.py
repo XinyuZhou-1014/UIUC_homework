@@ -1,14 +1,16 @@
 from math import sqrt
 import numpy as np
 from numpy import array, dot
+from LearningMethods import LearningMethods
 import logging
+from matplotlib import pyplot as plt
+from random import randrange
 logging.basicConfig(level=logging.DEBUG)
 
-class LearningMethods():
-
+class LearningWithStop(LearningMethods):
     def __init__(self):
         pass
-    
+
     @staticmethod
     def _perceptron(x, y, w, theta, learning_rate, margin=0):
         if margin < 0:
@@ -28,13 +30,18 @@ class LearningMethods():
             logging.debug('Perceptron with margin = 1. Tune: learning rate (%s).'%learning_rate)
         
         mistake = 0
+        no_mistake_length = 0
         mistake_list = []
         w = array(w).astype('float')
-        for i in range(y.shape[0]):
+        while no_mistake_length < 1000:
+            i = randrange(x.shape[0])
             xi, yi = x[i], y[i]
             predict = yi * (dot(w, xi) + theta)
             if predict <= 0:
                 mistake += 1
+                no_mistake_length = 0
+            else:
+                no_mistake_length += 1
             if predict > margin:
                 pass
             else:
@@ -59,12 +66,17 @@ class LearningMethods():
 
         mistake = 0
         mistake_list = []
+        no_mistake_length = 0
         w = array(w).astype('float')
-        for i in range(y.shape[0]):
+        while no_mistake_length < 1000:
+            i = randrange(x.shape[0])
             xi, yi = x[i], y[i]
             predict = yi * (dot(w, xi) + theta)
             if predict <= 0:
                 mistake += 1
+                no_mistake_length = 0
+            else:
+                no_mistake_length += 1
             if predict > margin:
                 pass
             else:
@@ -81,12 +93,17 @@ class LearningMethods():
         
         mistake = 0
         mistake_list = []
+        no_mistake_length = 0
         w = array(w).astype('float')
-        for i in range(y.shape[0]):
+        while no_mistake_length < 1000:
+            i = randrange(x.shape[0])
             xi, yi = x[i], y[i]
             predict = yi * (dot(w, xi) + theta)
             if predict <= 0:
                 mistake += 1
+                no_mistake_length = 0
+            else:
+                no_mistake_length += 1
             if predict > 1:
                 pass
             else:
@@ -98,41 +115,4 @@ class LearningMethods():
         return w, theta, mistake, mistake_list
 
 
-    @classmethod
-    def _learning_deploy(cls, method, x, y, w_init, theta_init, learning_rate, margin, times=1):
-        funcDict = {'Perceptron': cls._perceptron, 'Winnow': cls._winnow, 
-                    'AdaGrad': cls._AdaGrad}
-        try:
-            func = funcDict[method]
-        except KeyError as e:
-            raise(e)
 
-        if times <= 0:
-            logging.warning('Iterate 0 times?')
-            return 
-        w, theta = w_init, theta_init
-        mistake_total = 0
-        for i in range(times):
-            w, theta, mistake, mistake_list = func(x, y, w, theta, learning_rate, margin)
-            mistake_total += mistake
-        return w, theta, mistake_total, mistake_list
-
-    @classmethod
-    def learning(cls, learning_algorithm, x, y, initDict=None, times=1):
-        if callable(initDict):
-            n = x.shape[1]
-            initDict = initDict(n)
-        dct = initDict[learning_algorithm]
-        method, w, theta = dct['method'], dct['w'], dct['theta']
-        learning_rate_list, margin_list = dct['learning rate'], dct['margin']
-
-        
-        res = {}
-        for learning_rate in learning_rate_list:
-            for margin in margin_list:
-                res[(learning_rate, margin)] = cls._learning_deploy(
-                    method, x, y, w, theta, learning_rate, margin, times)
-        return res
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)

@@ -5,6 +5,7 @@ from sklearn.decomposition import PCA
 import sys
 import os
 
+
 class DocumentSimilarty():
     def __init__(self, data):
         self.data = data
@@ -22,16 +23,9 @@ class DocumentSimilarty():
         self.pcaVecDoc = None
 
     def tf(self, t, D):
-        if D >= self.numDoc:
-            print('tf(%s, %s): illegal query %s.'%(t, D, D))
-            return
-        if t not in self.wordDict:
-            print('tf(%s, %s): illegal query %s.'%(t, D, t))
-            return
-        
         if D not in self.wordDict[t]:
             return 0
-        return self.wordDict[t][D] / len(self.data[D])
+        return self.wordDict[t][D] / len(self.data[D].split(' '))
 
     def idf(self, t):
         return log(self.numDoc / len(self.wordDict[t]))
@@ -64,34 +58,34 @@ class DocumentSimilarty():
 
     def _ManhanttanDistance(self, v1, v2):
         res = 0
-        for i in range(len(v1)):
+        for i in range(len(v2)):
             res += abs(v1[i] - v2[i])
-        return res
+        return round(res,3)
 
     def _EuclideanDistance(self, v1, v2):
         res = 0
-        for i in range(len(v1)):
+        for i in range(len(v2)):
             res += (v1[i] - v2[i]) ** 2
-        return res ** (1/2)
+        return round(res ** (1/2),3)
 
     def _SupremumDistance(self, v1, v2):
         res = 0
-        for i in range(len(v1)):
+        for i in range(len(v2)):
             res = max(res, abs(v1[i] - v2[i]))
-        return res
+        return round(res,3)
 
     def _CosineSimilarity(self, v1, v2):
         res = 0
         n_v1 = self._norm(v1)
         n_v2 = self._norm(v2)
         dotProduct = self._dotProduct(v1, v2)
-        return dotProduct / (n_v1 * n_v2)
+        return round(dotProduct / (n_v1 * n_v2),3)
 
     def _EucDisAfterPCA(self, v1, v2):
         if self.pcaVecDoc is None:
-            print("didn't do PCA yet" , ...)
+            print("didn't do PCA yet")
             return
-        return self._EuclideanDistance(v1, v2)
+        return round(self._EuclideanDistance(v1, v2),3)
 
     def solution(self, question):
         Q = self.numDoc - 1
@@ -163,4 +157,3 @@ if __name__ == "__main__":
         data = f.read().split('\n')
     t = DocumentSimilarty(data)
     t.show()
-
