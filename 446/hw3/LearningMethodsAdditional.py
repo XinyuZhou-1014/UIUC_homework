@@ -1,3 +1,7 @@
+'''
+Contains LearningWithStop and LearningHingeLoss
+'''
+
 from math import sqrt
 import numpy as np
 from numpy import array, dot
@@ -5,12 +9,9 @@ from LearningMethods import LearningMethods
 import logging
 from matplotlib import pyplot as plt
 from random import randrange
-logging.basicConfig(level=logging.DEBUG)
+
 
 class LearningWithStop(LearningMethods):
-    def __init__(self):
-        pass
-
     @staticmethod
     def _perceptron(x, y, w, theta, learning_rate, margin=0):
         if margin < 0:
@@ -116,3 +117,4 @@ class LearningWithStop(LearningMethods):
 
 
 
+class LearningHingeLoss():

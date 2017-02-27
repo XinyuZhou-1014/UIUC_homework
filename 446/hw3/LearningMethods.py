@@ -2,12 +2,9 @@ from math import sqrt
 import numpy as np
 from numpy import array, dot
 import logging
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.INFO)
 
 class LearningMethods():
-
-    def __init__(self):
-        pass
     
     @staticmethod
     def _perceptron(x, y, w, theta, learning_rate, margin=0):
