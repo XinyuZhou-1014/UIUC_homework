@@ -33,7 +33,7 @@ def add_noise(y, x, noise_y_rate, noise_x_rate):
     tmp_y = (y + np.ones_like(y)) / 2
     noise_y = np.random.random(y.shape) < noise_y_rate
 
-    new_y = np.bitwise_xor(tmp_y, noise_y)
+    new_y = np.bitwise_xor(tmp_y.astype(int), noise_y)
     new_y = (2 * new_y) - np.ones_like(new_y)
 
     noise_x = np.random.random(x.shape) < noise_x_rate

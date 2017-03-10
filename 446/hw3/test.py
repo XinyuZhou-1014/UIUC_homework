@@ -1,11 +1,13 @@
 import pandas
 from LearningMethods import LearningMethods
-from LearningWithStop import LearningWithStop
+from LearningMethodsAdditional import LearningWithStop
 from gen import gen
+import numpy as np
 from numpy import dot, sign
 from matplotlib import pyplot as plt
 import logging
-logging.basicConfig(level=logging.DEBUG)
+import pickle
+logging.basicConfig(level=logging.INFO)
 
 def initDictGenerator(n):
     initDict = {
@@ -248,4 +250,141 @@ def problem_2plot():
         plt.savefig('problem2plot_%s.png'%n, dpi=144)
     plt.show()
 
-problem_2plot()
+
+def problem_3_dataGenerator():
+    l = 10
+    n = 1000
+    for m in [100, 500, 1000]:
+        t = Trainer()
+        train = t.data_generator(l=l, m=m, n=n, number_of_instances=50000, noise=True)
+        test = t.data_generator(l=l, m=m, n=n, number_of_instances=10000, noise=False)
+        np.save('p3trainX_m=%s'%m, train['x'])
+        np.save('p3trainY_m=%s'%m, train['y'])
+        np.save('p3testX_m=%s'%m, test['x'])
+        np.save('p3testY_m=%s'%m, test['y'])
+
+def problem_3_pureDataGenerator():
+    l = 10
+    n = 1000
+    for m in [100, 500, 1000]:
+        t = Trainer()
+        train = t.data_generator(l=l, m=m, n=n, number_of_instances=50000, noise=False)
+        np.save('p3pureX_m=%s'%m, train['x'])
+        np.save('p3pureY_m=%s'%m, train['y'])
+
+
+def problem_3_dataLoader(m, data='train'):
+    dct = {}
+    data = data.lower()
+    if data not in ['train', 'test', 'pure']:
+        raise("Invalid data parameter: <%s>."%data)
+    if data == 'pure':
+        logging.info('Using pure data as train')
+    dct['x'] = np.load('p3%sX_m=%s.npy'%(data, m))
+    dct['y'] = np.load('p3%sY_m=%s.npy'%(data, m))
+    numTuningData = dct['x'].shape[0] // 10
+    dct['D1_x'] = dct['x'][:numTuningData]
+    dct['D1_y'] = dct['y'][:numTuningData]
+    dct['D2_x'] = dct['x'][numTuningData: 2 * numTuningData]
+    dct['D2_y'] = dct['y'][numTuningData: 2 * numTuningData]
+    return dct
+
+def problem_3_tuning():
+    algorithmList = ['Perceptron', 'Perceptron with margin', 'Winnow', 'Winnow with margin', 'AdaGrad']
+    for m in [100, 500, 1000]:
+        print()
+
+        d = problem_3_dataLoader(m, 'train')
+        x, y = d['x'], d['y'] 
+        D1_x, D1_y, D2_x, D2_y = d['D1_x'], d['D1_y'], d['D2_x'], d['D2_y']
+        t = Trainer()
+        t.set_param(l=10, m=m, n=x.shape[1], number_of_instances=x.shape[0])
+        initDict = initDictGenerator(n=t.n)
+        for algorithm in algorithmList: 
+            algorithmInit = initDict[algorithm]
+            learningRateList = algorithmInit['learning rate']
+            marginList = algorithmInit['margin']
+            t.learning(algorithm, D1_x, D1_y, initDict=initDict, times=20)
+            for lr in learningRateList:
+                for mg in marginList:
+                    err_rate = t.error_estimate(D2_x, D2_y, lr, mg)
+                    mistake = t.mistakeCount(lr, mg)
+                    print('LR: {0: >6s}, MG: {1: >6s}, ER: {2: >6s}, Mis: {3: >6s}'.format(
+                        str(lr), str(mg), str(err_rate), str(mistake)))
+
+
+def problem_3_train_and_evaluate():
+    algorithmList = ['Perceptron', 'Perceptron with margin', 'Winnow', 'Winnow with margin', 'AdaGrad']
+    bestParaList = {100:  [(1, 0), (0.005, 1), (1.1, 0), (1.1, 0.3), ( 1.5, 1)],
+                    500:  [(1, 0), (  1.5, 1), (1.1, 0), (1.1, 0.3), ( 1.5, 1)], 
+                    1000: [(1, 0), ( 0.25, 1), (1.1, 0), (1.1, 0.3), (0.25, 1)]} 
+
+    for m in [100, 500, 1000]:
+        print()
+        #plt.figure()
+        d = problem_3_dataLoader(m)
+        x, y = d['x'], d['y']
+        d = problem_3_dataLoader(m, 'test')
+        xtest, ytest = d['x'], d['y']  
+        t = Trainer()
+        t.set_param(l=10, m=m, n=x.shape[1], number_of_instances=x.shape[0])
+        initDict = initDictGenerator(n=t.n)
+        #color = 'rgb'
+        for idx in range(len(algorithmList)): 
+            algorithm = algorithmList[idx]
+            algorithmInit = initDict[algorithm]
+            if m in bestParaList:
+                lr, mg = bestParaList[m][idx]
+            else:
+                lr, mg = bestParaList[500][idx]
+            algorithmInit['learning rate'] = [lr]
+            algorithmInit['margin'] = [mg]
+            t.learning(algorithm, x, y, initDict={algorithm: algorithmInit}, times=20)
+            err_rate = t.error_estimate(xtest, ytest, lr, mg)
+            print('LR: {0: >6s}, MG: {1: >6s}, ER: {2: >6s}'.format(
+                str(lr), str(mg), str(err_rate)))
+
+def problem_3_test():
+    algorithmList = ['Perceptron', 'Perceptron with margin', 'Winnow', 'Winnow with margin', 'AdaGrad']
+    bestParaList = {100:  [(1, 0), (0.001, 1), (1.1, 0), (1.1,  0.04), ( 1.5, 1)],
+                    500:  [(1, 0), ( 0.03, 1), (1.1, 0), (1.1,   2.0), ( 1.5, 1)], 
+                    1000: [(1, 0), ( 0.03, 1), (1.1, 0), (1.1, 0.006), (0.25, 1)]} 
+
+    for m in [100, 500, 1000]:
+        print()
+        #plt.figure()
+        d = problem_3_dataLoader(m, 'train')
+        x, y = d['x'], d['y']
+        d = problem_3_dataLoader(m, 'test')
+        xtest, ytest = d['x'], d['y']  
+        t = Trainer()
+        t.set_param(l=10, m=m, n=x.shape[1], number_of_instances=x.shape[0])
+        initDict = initDictGenerator(n=t.n)
+        color = 'rgbyk'
+        for idx in range(len(algorithmList)): 
+            algorithm = algorithmList[idx]
+            algorithmInit = initDict[algorithm]
+            if m in bestParaList:
+                lr, mg = bestParaList[m][idx]
+            else:
+                lr, mg = bestParaList[500][idx]
+            algorithmInit['learning rate'] = [lr]
+            algorithmInit['margin'] = [mg]
+            for i in range(1, 21, 4):
+                t.learning(algorithm, x, y, initDict={algorithm: algorithmInit}, times=i)
+                err_rate = t.error_estimate(xtest, ytest, lr, mg)
+                print(i)
+                print('LR: {0: >6s}, MG: {1: >6s}, ER: {2: >6s}'.format(
+                    str(lr), str(mg), str(err_rate)))
+
+
+def problem_4():
+    t = Trainer()
+    d = t.data_generator(l=l, m=m, n=n, number_of_instances=10000, noise=True)
+    
+
+
+#problem_3_dataGenerator()
+#problem_3_tuning()
+#problem_3_pureDataGenerator()
+#problem_3_test()
