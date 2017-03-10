@@ -117,4 +117,48 @@ class LearningWithStop(LearningMethods):
 
 
 
-class LearningHingeLoss():
+class LearningHingeLoss(LearningMethods):
+    @staticmethod
+    def _AdaGrad(x, y, w, theta, learning_rate, margin=None):
+        if learning_rate <= 0:
+            raise ValueError('Negative learning rate <%s> is prohibited in AdaGrad.'%learning_rate)
+        logging.debug('AdaGrad (no margin). Tune: Learning rate (%s)' %learning_rate)
+        
+        mistake = 0
+        hingeLoss = 0
+        w = array(w).astype('float')
+        for i in range(y.shape[0]):
+            xi, yi = x[i], y[i]
+            predict = yi * (dot(w, xi) + theta)
+            hingeLoss += max(0, 1-predict)
+            if predict <= 0:
+                mistake += 1
+            if predict > 1:
+                pass
+            else:
+                g = - yi * (np.append(xi, 1))
+                G = sum(np.apply_along_axis(lambda x: x ** 2, axis=0, arr=g))
+                w -= learning_rate * g[:-1] / sqrt(G)
+                theta -= learning_rate * g[-1] / sqrt(G)
+        return w, theta, mistake, hingeLoss
+
+    @classmethod
+    def _learning_deploy(cls, method, x, y, w_init, theta_init, learning_rate, margin, times=1):
+        funcDict = {'Perceptron': cls._perceptron, 'Winnow': cls._winnow, 
+                    'AdaGrad': cls._AdaGrad}
+        try:
+            func = funcDict[method]
+        except KeyError as e:
+            raise(e)
+
+        if times <= 0:
+            logging.warning('Iterate 0 times?')
+            return 
+        w, theta = w_init, theta_init
+        mistake_list = []
+        hingeLoss_list = []
+        for i in range(times):
+            w, theta, mistake, hingeLoss = func(x, y, w, theta, learning_rate, margin)
+            mistake_list.append(mistake)
+            hingeLoss_list.append(hingeLoss)
+        return w, theta, mistake_list, hingeLoss_list
